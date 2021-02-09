@@ -230,7 +230,12 @@ public class SecurityServiceImpl implements SecurityService {
 	private MarketDataResponse fetchMarketDataByTimeRange(String endpoint, boolean isEOD, String timeRange) {
 		
 		MarketDataResponse res = new MarketDataResponse();
-		RestTemplate restTemplate = new RestTemplate();
+		CloseableHttpClient httpClient = HttpClients.custom()
+                .setSSLHostnameVerifier(new NoopHostnameVerifier())
+                .build();
+		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
+		requestFactory.setHttpClient(httpClient);
+		RestTemplate restTemplate = new RestTemplate(requestFactory);
 		
 		MarketStackResponse marketStackResponse = restTemplate.getForObject(endpoint, MarketStackResponse.class);
 		List<DataResponse> dataList = marketStackResponse.getData();
