@@ -123,9 +123,12 @@ public class SecurityServiceImpl implements SecurityService {
 			res.setDescription(security.getDescription());
 			res.setOnWatchlist(security.getOnWatchlist());
 			
-			MarketDataResponse defaultMarketData = getMarketDataOneWeek(security.getSecurityIdentifier());
-			defaultMarketData.setShowScale(false);
-			res.setDefaultMarketData(defaultMarketData);
+			/*
+			 * MarketDataResponse defaultMarketData =
+			 * getMarketDataOneWeek(security.getSecurityIdentifier());
+			 * defaultMarketData.setShowScale(false);
+			 * res.setDefaultMarketData(defaultMarketData);
+			 */
 			
 			resList.add(fetchSecurityMarketData(res, security.getSecuritySymbol()));
 		}
