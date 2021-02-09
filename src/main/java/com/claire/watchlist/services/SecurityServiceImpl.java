@@ -5,18 +5,19 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 import java.util.TimeZone;
 
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -32,7 +33,6 @@ import com.claire.watchlist.response.models.SecurityResponse;
 public class SecurityServiceImpl implements SecurityService {
 	
 	private static final Logger log = LoggerFactory.getLogger(SecurityServiceImpl.class);
-	private static RestTemplate restTemplate = initRestTemplate();
 	
 	@Autowired
 	private SecurityRepository securityRepository;
@@ -150,12 +150,21 @@ public class SecurityServiceImpl implements SecurityService {
 	
 	@Override
 	public MarketDataResponse getMarketDataOneWeek(String id) {
+		System.out.println("-------f");
+		RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+        headers.add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36");
+        HttpEntity<String> entity = new HttpEntity<String>("parameters", headers);
+
+		
+        System.out.println("------1f");
 		
 		String symbol = securityRepository.findBySecurityIdentifier(id).getSecuritySymbol();
 		String endpointForLatest = WatchlistConstants.LATEST_EOD_URL + symbol;
 		
-		MarketStackResponse marketStackResponse = restTemplate.getForObject(endpointForLatest, MarketStackResponse.class);
-		String latestDate = marketStackResponse.getData().get(0).getDate();
+		Object marketStackResponse = restTemplate.exchange(endpointForLatest, HttpMethod.GET,entity,Object.class);
+		String latestDate = ((MarketStackResponse) marketStackResponse).getData().get(0).getDate();
 		
 		SimpleDateFormat dateFormat = new SimpleDateFormat(WatchlistConstants.DATE_FORMAT);
 		dateFormat.setTimeZone(TimeZone.getTimeZone(WatchlistConstants.TIME_ZONE));
@@ -224,6 +233,8 @@ public class SecurityServiceImpl implements SecurityService {
 	private MarketDataResponse fetchMarketDataByTimeRange(String endpoint, boolean isEOD, String timeRange) {
 		
 		MarketDataResponse res = new MarketDataResponse();
+		RestTemplate restTemplate = new RestTemplate();
+		
 		MarketStackResponse marketStackResponse = restTemplate.getForObject(endpoint, MarketStackResponse.class);
 		List<DataResponse> dataList = marketStackResponse.getData();
 		List<BigDecimal> priceList = new ArrayList<>();
@@ -252,6 +263,8 @@ public class SecurityServiceImpl implements SecurityService {
 	
 	private SecurityResponse fetchSecurityMarketData(SecurityResponse securityObj, String symbol) {
 
+		RestTemplate restTemplate = new RestTemplate();
+		
 		String latestEODEndpoint = WatchlistConstants.LATEST_EOD_URL + symbol; String
 		latestIntradayEndpoint = WatchlistConstants.LATEST_INTRADAY_URL + symbol;
 		 
@@ -282,17 +295,5 @@ public class SecurityServiceImpl implements SecurityService {
 		securityObj.setDateForLatestEOD(dateFormat.format(calForEOD.getTime()));
 		
 		return securityObj;
-	}
-	
-	private static RestTemplate initRestTemplate() {
-		
-		CloseableHttpClient httpClient = HttpClients.custom()
-                .setSSLHostnameVerifier(new NoopHostnameVerifier())
-                .build();
-		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
-		requestFactory.setHttpClient(httpClient);
-		RestTemplate restTemplate = new RestTemplate(requestFactory);
-		
-		return restTemplate;
 	}
 }
