@@ -1,6 +1,7 @@
 package com.claire.watchlist.web;
 
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,7 +58,7 @@ public class SecurityController {
 		
 		List<SecurityResponse> resList = securityService.findSecuritiesOnWatchlist();
 
-		return resList;
+		return new ArrayList<SecurityResponse>();
 	}
 	
 	@GetMapping("/updateOnWatchlist")
