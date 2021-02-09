@@ -18,6 +18,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -150,21 +151,18 @@ public class SecurityServiceImpl implements SecurityService {
 	
 	@Override
 	public MarketDataResponse getMarketDataOneWeek(String id) {
-		System.out.println("-------f");
+
 		RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
         headers.add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36");
         HttpEntity<String> entity = new HttpEntity<String>("parameters", headers);
-
-		
-        System.out.println("------1f");
 		
 		String symbol = securityRepository.findBySecurityIdentifier(id).getSecuritySymbol();
 		String endpointForLatest = WatchlistConstants.LATEST_EOD_URL + symbol;
 		
-		Object marketStackResponse = restTemplate.exchange(endpointForLatest, HttpMethod.GET,entity,Object.class);
-		String latestDate = ((MarketStackResponse) marketStackResponse).getData().get(0).getDate();
+		ResponseEntity<MarketStackResponse> marketStackResponse = restTemplate.exchange(endpointForLatest, HttpMethod.GET, entity, MarketStackResponse.class);
+		String latestDate = marketStackResponse.getBody().getData().get(0).getDate();
 		
 		SimpleDateFormat dateFormat = new SimpleDateFormat(WatchlistConstants.DATE_FORMAT);
 		dateFormat.setTimeZone(TimeZone.getTimeZone(WatchlistConstants.TIME_ZONE));
@@ -234,9 +232,13 @@ public class SecurityServiceImpl implements SecurityService {
 		
 		MarketDataResponse res = new MarketDataResponse();
 		RestTemplate restTemplate = new RestTemplate();
+		HttpHeaders headers = new HttpHeaders();
+		headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+		headers.add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36");
+		HttpEntity<String> entity = new HttpEntity<String>("parameters", headers);
 		
-		MarketStackResponse marketStackResponse = restTemplate.getForObject(endpoint, MarketStackResponse.class);
-		List<DataResponse> dataList = marketStackResponse.getData();
+		ResponseEntity<MarketStackResponse> marketStackResponse = restTemplate.exchange(endpoint, HttpMethod.GET, entity, MarketStackResponse.class);
+		List<DataResponse> dataList = marketStackResponse.getBody().getData();
 		List<BigDecimal> priceList = new ArrayList<>();
 		List<String> label = new ArrayList<>();
 		
@@ -264,14 +266,19 @@ public class SecurityServiceImpl implements SecurityService {
 	private SecurityResponse fetchSecurityMarketData(SecurityResponse securityObj, String symbol) {
 
 		RestTemplate restTemplate = new RestTemplate();
+		HttpHeaders headers = new HttpHeaders();
+		headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+		headers.add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36");
+		HttpEntity<String> entity = new HttpEntity<String>("parameters", headers);
 		
 		String latestEODEndpoint = WatchlistConstants.LATEST_EOD_URL + symbol; String
 		latestIntradayEndpoint = WatchlistConstants.LATEST_INTRADAY_URL + symbol;
 		 
-		MarketStackResponse latesEODResponse = restTemplate.getForObject(latestEODEndpoint, MarketStackResponse.class);
-		MarketStackResponse latesIntradayResponse = restTemplate.getForObject(latestIntradayEndpoint, MarketStackResponse.class);
-		DataResponse latestEODData = latesEODResponse.getData().get(0); 
-		DataResponse latestIntradayData = latesIntradayResponse.getData().get(0);
+		ResponseEntity<MarketStackResponse> latesEODResponse = restTemplate.exchange(latestEODEndpoint, HttpMethod.GET, entity, MarketStackResponse.class);
+		ResponseEntity<MarketStackResponse> latesIntradayResponse = restTemplate.exchange(latestIntradayEndpoint, HttpMethod.GET, entity, MarketStackResponse.class);
+		
+		DataResponse latestEODData = latesEODResponse.getBody().getData().get(0); 
+		DataResponse latestIntradayData = latesIntradayResponse.getBody().getData().get(0);
 		
 		NumberFormat priceFormat = NumberFormat.getCurrencyInstance();
 		
