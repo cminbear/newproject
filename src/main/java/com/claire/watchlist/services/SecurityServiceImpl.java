@@ -10,6 +10,7 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,8 +20,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import com.claire.watchlist.constants.WatchlistConstants;
@@ -153,9 +154,7 @@ public class SecurityServiceImpl implements SecurityService {
 	}
 	
 	@Override
-	@Retryable(value = RuntimeException.class)
 	public MarketDataResponse getMarketDataOneWeek(String id) {
-		System.out.println("---retury one week");
 
 		String symbol = securityRepository.findBySecurityIdentifier(id).getSecuritySymbol();
 		String endpointForLatest = WatchlistConstants.LATEST_EOD_URL + symbol;
@@ -227,12 +226,11 @@ public class SecurityServiceImpl implements SecurityService {
 		return fetchMarketDataByTimeRange(endpoint, true, WatchlistConstants.TIME_RANGE_1Y);
 	}
 	
-	@Retryable(value = RuntimeException.class)
 	private MarketDataResponse fetchMarketDataByTimeRange(String endpoint, boolean isEOD, String timeRange) {
-		System.out.println("---retury time range");
 		
 		MarketDataResponse res = new MarketDataResponse();
 		
+		try {
 		ResponseEntity<MarketStackResponse> marketStackResponse = restTemplate.exchange(endpoint, HttpMethod.GET, entity, MarketStackResponse.class);
 		List<DataResponse> dataList = marketStackResponse.getBody().getData();
 		List<BigDecimal> priceList = new ArrayList<>();
@@ -255,6 +253,43 @@ public class SecurityServiceImpl implements SecurityService {
 		res.setMinPrice(Collections.min(priceList));
 		res.setMaxPrice(Collections.max(priceList));
 		res.setLabel(label);
+		
+		} catch (HttpClientErrorException e) {
+			try {
+				System.out.println();
+				TimeUnit.SECONDS.sleep(1);
+				System.out.println("------try");
+				
+				
+				ResponseEntity<MarketStackResponse> marketStackResponse = restTemplate.exchange(endpoint, HttpMethod.GET, entity, MarketStackResponse.class);
+				List<DataResponse> dataList = marketStackResponse.getBody().getData();
+				List<BigDecimal> priceList = new ArrayList<>();
+				List<String> label = new ArrayList<>();
+				
+				if (isEOD) {
+					for (DataResponse data : dataList) {
+						priceList.add(data.getAdj_close().setScale(2, BigDecimal.ROUND_HALF_UP));
+						label.add("");
+					}
+				} else {
+					for (DataResponse data : dataList) {
+						priceList.add(data.getLast().setScale(2, BigDecimal.ROUND_HALF_UP));
+						label.add("");
+					}
+				}
+
+				res.setTimeRange(timeRange);
+				res.setPriceList(priceList);
+				res.setMinPrice(Collections.min(priceList));
+				res.setMaxPrice(Collections.max(priceList));
+				res.setLabel(label);
+				
+			} catch (InterruptedException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			
+		}
 		
 		return res;
 	}
