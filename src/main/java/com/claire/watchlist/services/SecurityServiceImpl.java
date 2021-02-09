@@ -153,7 +153,7 @@ public class SecurityServiceImpl implements SecurityService {
 	}
 	
 	@Override
-	@Retryable()
+	@Retryable(value = RuntimeException.class)
 	public MarketDataResponse getMarketDataOneWeek(String id) {
 		System.out.println("---retury one week");
 
@@ -227,7 +227,7 @@ public class SecurityServiceImpl implements SecurityService {
 		return fetchMarketDataByTimeRange(endpoint, true, WatchlistConstants.TIME_RANGE_1Y);
 	}
 	
-	@Retryable()
+	@Retryable(value = RuntimeException.class)
 	private MarketDataResponse fetchMarketDataByTimeRange(String endpoint, boolean isEOD, String timeRange) {
 		System.out.println("---retury time range");
 		
