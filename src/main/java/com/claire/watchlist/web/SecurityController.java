@@ -56,8 +56,8 @@ public class SecurityController {
 	@GetMapping("/watchlist") 
 	public List<SecurityResponse> getSecuritiesOnWatchlist() {
 		
-		List<SecurityResponse> resList = securityService.findSecuritiesOnWatchlist();
-
+		//List<SecurityResponse> resList = securityService.findSecuritiesOnWatchlist();
+		System.out.println("----claire ");
 		return new ArrayList<SecurityResponse>();
 	}
 	
