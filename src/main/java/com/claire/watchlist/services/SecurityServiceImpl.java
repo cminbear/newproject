@@ -34,6 +34,8 @@ import com.claire.watchlist.response.models.SecurityResponse;
 public class SecurityServiceImpl implements SecurityService {
 	
 	private static final Logger log = LoggerFactory.getLogger(SecurityServiceImpl.class);
+	private static RestTemplate restTemplate = new RestTemplate();
+	private static HttpEntity<String> entity = initHeader();
 	
 	@Autowired
 	private SecurityRepository securityRepository;
@@ -152,12 +154,6 @@ public class SecurityServiceImpl implements SecurityService {
 	@Override
 	public MarketDataResponse getMarketDataOneWeek(String id) {
 
-		RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
-        headers.add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36");
-        HttpEntity<String> entity = new HttpEntity<String>("parameters", headers);
-		
 		String symbol = securityRepository.findBySecurityIdentifier(id).getSecuritySymbol();
 		String endpointForLatest = WatchlistConstants.LATEST_EOD_URL + symbol;
 		
@@ -231,11 +227,6 @@ public class SecurityServiceImpl implements SecurityService {
 	private MarketDataResponse fetchMarketDataByTimeRange(String endpoint, boolean isEOD, String timeRange) {
 		
 		MarketDataResponse res = new MarketDataResponse();
-		RestTemplate restTemplate = new RestTemplate();
-		HttpHeaders headers = new HttpHeaders();
-		headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
-		headers.add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36");
-		HttpEntity<String> entity = new HttpEntity<String>("parameters", headers);
 		
 		ResponseEntity<MarketStackResponse> marketStackResponse = restTemplate.exchange(endpoint, HttpMethod.GET, entity, MarketStackResponse.class);
 		List<DataResponse> dataList = marketStackResponse.getBody().getData();
@@ -265,12 +256,6 @@ public class SecurityServiceImpl implements SecurityService {
 	
 	private SecurityResponse fetchSecurityMarketData(SecurityResponse securityObj, String symbol) {
 
-		RestTemplate restTemplate = new RestTemplate();
-		HttpHeaders headers = new HttpHeaders();
-		headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
-		headers.add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36");
-		HttpEntity<String> entity = new HttpEntity<String>("parameters", headers);
-		
 		String latestEODEndpoint = WatchlistConstants.LATEST_EOD_URL + symbol; String
 		latestIntradayEndpoint = WatchlistConstants.LATEST_INTRADAY_URL + symbol;
 		 
@@ -302,5 +287,14 @@ public class SecurityServiceImpl implements SecurityService {
 		securityObj.setDateForLatestEOD(dateFormat.format(calForEOD.getTime()));
 		
 		return securityObj;
+	}
+	
+	static private HttpEntity<String> initHeader() {
+		HttpHeaders headers = new HttpHeaders();
+		headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+		headers.add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36");
+		HttpEntity<String> entity = new HttpEntity<String>("parameters", headers);
+		
+		return entity;
 	}
 }
