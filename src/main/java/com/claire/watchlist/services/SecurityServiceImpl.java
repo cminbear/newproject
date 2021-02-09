@@ -122,13 +122,10 @@ public class SecurityServiceImpl implements SecurityService {
 			res.setSecurityIdentifier(security.getSecurityIdentifier());
 			res.setDescription(security.getDescription());
 			res.setOnWatchlist(security.getOnWatchlist());
-			
-			/*
-			 * MarketDataResponse defaultMarketData =
-			 * getMarketDataOneWeek(security.getSecurityIdentifier());
-			 * defaultMarketData.setShowScale(false);
-			 * res.setDefaultMarketData(defaultMarketData);
-			 */
+			System.out.println("--how many----");
+			MarketDataResponse defaultMarketData = getMarketDataOneWeek(security.getSecurityIdentifier());
+			defaultMarketData.setShowScale(false);
+			res.setDefaultMarketData(defaultMarketData);
 			
 			resList.add(fetchSecurityMarketData(res, security.getSecuritySymbol()));
 		}
@@ -159,10 +156,10 @@ public class SecurityServiceImpl implements SecurityService {
 
 		String symbol = securityRepository.findBySecurityIdentifier(id).getSecuritySymbol();
 		String endpointForLatest = WatchlistConstants.LATEST_EOD_URL + symbol;
-		
+		System.out.println("----claire before");
 		ResponseEntity<MarketStackResponse> marketStackResponse = restTemplate.exchange(endpointForLatest, HttpMethod.GET, entity, MarketStackResponse.class);
 		String latestDate = marketStackResponse.getBody().getData().get(0).getDate();
-		
+		System.out.println("----claire after");
 		SimpleDateFormat dateFormat = new SimpleDateFormat(WatchlistConstants.DATE_FORMAT);
 		dateFormat.setTimeZone(TimeZone.getTimeZone(WatchlistConstants.TIME_ZONE));
 		Calendar cal  = Calendar.getInstance();
