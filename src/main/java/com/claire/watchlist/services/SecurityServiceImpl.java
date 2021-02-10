@@ -166,7 +166,7 @@ public class SecurityServiceImpl implements SecurityService {
 		} catch (HttpClientErrorException e) {
 			try {
 				System.out.println("---------try getMarketDataOneWeek");
-				TimeUnit.MILLISECONDS.sleep(500);
+				TimeUnit.MILLISECONDS.sleep(200);
 				ResponseEntity<MarketStackResponse> marketStackResponse = restTemplate.exchange(endpointForLatest, HttpMethod.GET, entity, MarketStackResponse.class);
 				latestDate = marketStackResponse.getBody().getData().get(0).getDate();
 			} catch (InterruptedException e1) {
@@ -251,7 +251,7 @@ public class SecurityServiceImpl implements SecurityService {
 		} catch (HttpClientErrorException e) {
 			try {
 				System.out.println("---------try fetchMarketDataByTimeRange");
-				TimeUnit.MILLISECONDS.sleep(500);
+				TimeUnit.MILLISECONDS.sleep(200);
 				ResponseEntity<MarketStackResponse> marketStackResponse = restTemplate.exchange(endpoint, HttpMethod.GET, entity, MarketStackResponse.class);
 				dataList = marketStackResponse.getBody().getData();
 			} catch (InterruptedException e1) {
@@ -296,7 +296,7 @@ public class SecurityServiceImpl implements SecurityService {
 		} catch (HttpClientErrorException e) {
 			try {
 				System.out.println("---------try fetchSecurityMarketData");
-				TimeUnit.MILLISECONDS.sleep(500);
+				TimeUnit.MILLISECONDS.sleep(200);
 				ResponseEntity<MarketStackResponse> latesEODResponse = restTemplate.exchange(latestEODEndpoint, HttpMethod.GET, entity, MarketStackResponse.class);
 				ResponseEntity<MarketStackResponse> latesIntradayResponse = restTemplate.exchange(latestIntradayEndpoint, HttpMethod.GET, entity, MarketStackResponse.class);
 				latestEODData = latesEODResponse.getBody().getData().get(0); 
