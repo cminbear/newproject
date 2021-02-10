@@ -241,11 +241,23 @@ public class SecurityServiceImpl implements SecurityService {
 	private MarketDataResponse fetchMarketDataByTimeRange(String endpoint, boolean isEOD, String timeRange) {
 		
 		MarketDataResponse res = new MarketDataResponse();
-		
-		ResponseEntity<MarketStackResponse> marketStackResponse = restTemplate.exchange(endpoint, HttpMethod.GET, entity, MarketStackResponse.class);
-		List<DataResponse> dataList = marketStackResponse.getBody().getData();
+		List<DataResponse> dataList = new ArrayList<>();
 		List<BigDecimal> priceList = new ArrayList<>();
 		List<String> label = new ArrayList<>();
+		
+		try {
+			ResponseEntity<MarketStackResponse> marketStackResponse = restTemplate.exchange(endpoint, HttpMethod.GET, entity, MarketStackResponse.class);
+			dataList = marketStackResponse.getBody().getData();
+		} catch (HttpClientErrorException e) {
+			try {
+				System.out.println("---------try fetchMarketDataByTimeRange");
+				TimeUnit.SECONDS.sleep(1);
+				ResponseEntity<MarketStackResponse> marketStackResponse = restTemplate.exchange(endpoint, HttpMethod.GET, entity, MarketStackResponse.class);
+				dataList = marketStackResponse.getBody().getData();
+			} catch (InterruptedException e1) {
+				log.error("Error occured while requesting data.", e);
+			}
+		}
 		
 		if (isEOD) {
 			for (DataResponse data : dataList) {
@@ -273,11 +285,26 @@ public class SecurityServiceImpl implements SecurityService {
 		String latestEODEndpoint = WatchlistConstants.LATEST_EOD_URL + symbol; String
 		latestIntradayEndpoint = WatchlistConstants.LATEST_INTRADAY_URL + symbol;
 		 
-		ResponseEntity<MarketStackResponse> latesEODResponse = restTemplate.exchange(latestEODEndpoint, HttpMethod.GET, entity, MarketStackResponse.class);
-		ResponseEntity<MarketStackResponse> latesIntradayResponse = restTemplate.exchange(latestIntradayEndpoint, HttpMethod.GET, entity, MarketStackResponse.class);
+		DataResponse latestEODData = new DataResponse();
+		DataResponse latestIntradayData = new DataResponse();
 		
-		DataResponse latestEODData = latesEODResponse.getBody().getData().get(0); 
-		DataResponse latestIntradayData = latesIntradayResponse.getBody().getData().get(0);
+		try {
+			ResponseEntity<MarketStackResponse> latesEODResponse = restTemplate.exchange(latestEODEndpoint, HttpMethod.GET, entity, MarketStackResponse.class);
+			ResponseEntity<MarketStackResponse> latesIntradayResponse = restTemplate.exchange(latestIntradayEndpoint, HttpMethod.GET, entity, MarketStackResponse.class);
+			latestEODData = latesEODResponse.getBody().getData().get(0); 
+			latestIntradayData = latesIntradayResponse.getBody().getData().get(0);
+		} catch (HttpClientErrorException e) {
+			try {
+				System.out.println("---------try fetchSecurityMarketData");
+				TimeUnit.SECONDS.sleep(1);
+				ResponseEntity<MarketStackResponse> latesEODResponse = restTemplate.exchange(latestEODEndpoint, HttpMethod.GET, entity, MarketStackResponse.class);
+				ResponseEntity<MarketStackResponse> latesIntradayResponse = restTemplate.exchange(latestIntradayEndpoint, HttpMethod.GET, entity, MarketStackResponse.class);
+				latestEODData = latesEODResponse.getBody().getData().get(0); 
+				latestIntradayData = latesIntradayResponse.getBody().getData().get(0);
+			} catch (InterruptedException e1) {
+				log.error("Error occured while requesting data.", e);
+			}
+		}
 		
 		NumberFormat priceFormat = NumberFormat.getCurrencyInstance();
 		
