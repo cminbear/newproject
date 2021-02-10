@@ -158,9 +158,21 @@ public class SecurityServiceImpl implements SecurityService {
 
 		String symbol = securityRepository.findBySecurityIdentifier(id).getSecuritySymbol();
 		String endpointForLatest = WatchlistConstants.LATEST_EOD_URL + symbol;
+		String latestDate = "";
 		
-		ResponseEntity<MarketStackResponse> marketStackResponse = restTemplate.exchange(endpointForLatest, HttpMethod.GET, entity, MarketStackResponse.class);
-		String latestDate = marketStackResponse.getBody().getData().get(0).getDate();
+		try {
+			ResponseEntity<MarketStackResponse> marketStackResponse = restTemplate.exchange(endpointForLatest, HttpMethod.GET, entity, MarketStackResponse.class);
+			latestDate = marketStackResponse.getBody().getData().get(0).getDate();
+		} catch (HttpClientErrorException e) {
+			try {
+				System.out.println("---------try getMarketDataOneWeek");
+				TimeUnit.SECONDS.sleep(1);
+				ResponseEntity<MarketStackResponse> marketStackResponse = restTemplate.exchange(endpointForLatest, HttpMethod.GET, entity, MarketStackResponse.class);
+				latestDate = marketStackResponse.getBody().getData().get(0).getDate();
+			} catch (InterruptedException e1) {
+				log.error("Error occured while requesting data.", e);
+			}
+		}
 		
 		SimpleDateFormat dateFormat = new SimpleDateFormat(WatchlistConstants.DATE_FORMAT);
 		dateFormat.setTimeZone(TimeZone.getTimeZone(WatchlistConstants.TIME_ZONE));
@@ -230,7 +242,6 @@ public class SecurityServiceImpl implements SecurityService {
 		
 		MarketDataResponse res = new MarketDataResponse();
 		
-		try {
 		ResponseEntity<MarketStackResponse> marketStackResponse = restTemplate.exchange(endpoint, HttpMethod.GET, entity, MarketStackResponse.class);
 		List<DataResponse> dataList = marketStackResponse.getBody().getData();
 		List<BigDecimal> priceList = new ArrayList<>();
@@ -253,43 +264,6 @@ public class SecurityServiceImpl implements SecurityService {
 		res.setMinPrice(Collections.min(priceList));
 		res.setMaxPrice(Collections.max(priceList));
 		res.setLabel(label);
-		
-		} catch (HttpClientErrorException e) {
-			try {
-				System.out.println();
-				TimeUnit.SECONDS.sleep(1);
-				System.out.println("------try");
-				
-				
-				ResponseEntity<MarketStackResponse> marketStackResponse = restTemplate.exchange(endpoint, HttpMethod.GET, entity, MarketStackResponse.class);
-				List<DataResponse> dataList = marketStackResponse.getBody().getData();
-				List<BigDecimal> priceList = new ArrayList<>();
-				List<String> label = new ArrayList<>();
-				
-				if (isEOD) {
-					for (DataResponse data : dataList) {
-						priceList.add(data.getAdj_close().setScale(2, BigDecimal.ROUND_HALF_UP));
-						label.add("");
-					}
-				} else {
-					for (DataResponse data : dataList) {
-						priceList.add(data.getLast().setScale(2, BigDecimal.ROUND_HALF_UP));
-						label.add("");
-					}
-				}
-
-				res.setTimeRange(timeRange);
-				res.setPriceList(priceList);
-				res.setMinPrice(Collections.min(priceList));
-				res.setMaxPrice(Collections.max(priceList));
-				res.setLabel(label);
-				
-			} catch (InterruptedException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			
-		}
 		
 		return res;
 	}
